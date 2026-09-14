@@ -2,8 +2,8 @@ package uk.gov.ons.census.notifysvc.utils;
 
 import static uk.gov.ons.census.notifysvc.utils.Constants.ALLOWED_INBOUND_EVENT_SCHEMA_VERSIONS;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import java.io.IOException;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventDTO;
 
 public class JsonHelper {
@@ -13,7 +13,7 @@ public class JsonHelper {
     EventDTO event;
     try {
       event = objectMapper.readValue(bytes, EventDTO.class);
-    } catch (IOException e) {
+    } catch (JacksonException e) {
       throw new RuntimeException(e);
     }
 

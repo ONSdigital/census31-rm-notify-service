@@ -1,7 +1,7 @@
 package uk.gov.ons.census.notifysvc.testUtils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import uk.gov.ons.census.notifysvc.utils.ObjectMapperFactory;
 
 public class JsonTestHelper {
@@ -10,7 +10,7 @@ public class JsonTestHelper {
   public static String convertObjectToJson(Object obj) {
     try {
       return objectMapper.writeValueAsString(obj);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new RuntimeException("Failed converting Object To Json", e);
     }
   }
