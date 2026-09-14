@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>uk.gov.ons.census</groupId>
@@ -10,7 +11,6 @@
     <properties>
         <java.version>21</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
-
         <census-rm-common-entity-model.version>1.0.0-SNAPSHOT</census-rm-common-entity-model.version>
         <census-rm-shared-sample-validation.version>1.0.0-SNAPSHOT</census-rm-shared-sample-validation.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -123,13 +123,6 @@
     </repositories>
 
     <dependencies>
-        <!-- TEMPORARY - remove once the upgrade is proven.
-             Logs every renamed/removed configuration property at startup. -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-properties-migrator</artifactId>
-            <scope>runtime</scope>
-        </dependency>
         <dependency>
             <groupId>uk.gov.ons.census</groupId>
             <artifactId>census-rm-common-entity-model</artifactId>
@@ -144,18 +137,6 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter</artifactId>
         </dependency>
-
-        <!-- ============================================================
-             Spring Integration 6.5 -> 7.1.
-
-             *** SEE THE CROSS-REPO FINDING ***
-             MessageConsumerConfig builds a RequestHandlerRetryAdvice with NO
-             explicit retry policy. Spring Integration 7 changed that default
-             from 3 TOTAL invocations to 4. For a service that calls a
-             rate-limited GOV.UK Notify API that is the wrong direction - the
-             policy must be pinned explicitly. See migration doc 10 Step 5 and
-             FINDING-request-handler-retry-advice-default-change.md.
-             ============================================================ -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-integration</artifactId>
