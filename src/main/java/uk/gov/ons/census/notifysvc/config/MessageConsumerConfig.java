@@ -16,7 +16,7 @@ import uk.gov.ons.census.notifysvc.messaging.ManagedMessageRecoverer;
 
 @Configuration
 public class MessageConsumerConfig {
-  private static final long NOTIFY_TOTAL_ATTEMPTS = 3;
+  private static final int NOTIFY_TOTAL_ATTEMPTS = 3;
 
   private final ManagedMessageRecoverer managedMessageRecoverer;
   private final PubSubTemplate pubSubTemplate;

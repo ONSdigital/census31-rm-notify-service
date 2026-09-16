@@ -40,7 +40,7 @@
         <easy-random.version>6.0.1</easy-random.version>
         <wiremock.version>3.13.2</wiremock.version>
 
-        <!-- Plugin and extension versions -->
+        <!-- Plugin versions -->
         <maven-pmd-plugin.version>3.28.0</maven-pmd-plugin.version>
         <pmd.version>7.26.0</pmd.version>
         <exec-maven-plugin.version>3.6.3</exec-maven-plugin.version>
@@ -48,7 +48,6 @@
         <google-java-format.version>1.36.1</google-java-format.version>
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <error-prone-core.version>2.50.0</error-prone-core.version>
-        <artifactregistry-maven-wagon.version>2.2.5</artifactregistry-maven-wagon.version>
     </properties>
 
     <profiles>
@@ -236,13 +235,6 @@
 
     <build>
         <defaultGoal>clean install</defaultGoal>
-        <extensions>
-            <extension>
-                <groupId>com.google.cloud.artifactregistry</groupId>
-                <artifactId>artifactregistry-maven-wagon</artifactId>
-                <version>${artifactregistry-maven-wagon.version}</version>
-            </extension>
-        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
