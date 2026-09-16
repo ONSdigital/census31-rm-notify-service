@@ -9,6 +9,7 @@ import tools.jackson.databind.json.JsonMapper;
 public class ObjectMapperFactory {
   public static ObjectMapper objectMapper() {
     return JsonMapper.builder()
+        .findAndAddModules()
         // Jackson 3 enables SORT_PROPERTIES_ALPHABETICALLY by default. Disabled
         // so every published event keeps its declaration order and this release
         // is contract-neutral. MapperFeature is builder-only in Jackson 3.

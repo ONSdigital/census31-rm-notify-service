@@ -1,14 +1,19 @@
 package uk.gov.ons.census.notifysvc.messaging;
 
+import static uk.gov.ons.census.notifysvc.utils.Constants.RATE_LIMITER_EXCEPTION_MESSAGE;
+
 import com.google.cloud.spring.pubsub.support.BasicAcknowledgeablePubsubMessage;
 import com.google.cloud.spring.pubsub.support.GcpPubSubHeaders;
 import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.ProjectSubscriptionName;
+import java.util.Objects;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.AttributeAccessor;
 import org.springframework.integration.core.RecoveryCallback;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandlingException;
 import org.springframework.messaging.MessagingException;
@@ -35,7 +40,7 @@ public class ManagedMessageRecoverer
   }
 
   @Override
-  public Object recover(AttributeAccessor context, Throwable throwable) {
+  public Object recover(@NonNull AttributeAccessor context, @NonNull Throwable throwable) {
     return recoverFromThrowable(throwable);
   }
 
@@ -51,11 +56,13 @@ public class ManagedMessageRecoverer
       throw new RuntimeException(throwable);
     }
 
-    Message<?> message = messagingException.getFailedMessage();
+    Message<?> message = Objects.requireNonNull(messagingException.getFailedMessage());
     BasicAcknowledgeablePubsubMessage originalMessage =
         (BasicAcknowledgeablePubsubMessage)
-            message.getHeaders().get(GcpPubSubHeaders.ORIGINAL_MESSAGE);
-    String subscriptionName = originalMessage.getProjectSubscriptionName().getSubscription();
+            Objects.requireNonNull(message.getHeaders().get(GcpPubSubHeaders.ORIGINAL_MESSAGE));
+    ProjectSubscriptionName projectSubscriptionName =
+        Objects.requireNonNull(originalMessage.getProjectSubscriptionName());
+    String subscriptionName = projectSubscriptionName.getSubscription();
     ByteString originalMessageByteString = originalMessage.getPubsubMessage().getData();
     byte[] rawMessageBody = new byte[originalMessageByteString.size()];
     originalMessageByteString.copyTo(rawMessageBody, 0);
@@ -65,6 +72,8 @@ public class ManagedMessageRecoverer
     String stackTraceRootCause = findUsefulRootCauseInStackTrace(throwable);
 
     Throwable cause = findReportableCause(messagingException);
+    Throwable loggingCause =
+        messagingException.getCause() != null ? messagingException.getCause() : cause;
 
     ExceptionReportResponse reportResult =
         getExceptionReportResponse(cause, messageHash, stackTraceRootCause, subscriptionName);
@@ -75,7 +84,7 @@ public class ManagedMessageRecoverer
 
     peekMessage(reportResult, messageHash, rawMessageBody);
 
-    logMessage(reportResult, cause, messageHash, stackTraceRootCause);
+    logMessage(reportResult, loggingCause, messageHash, stackTraceRootCause);
 
     // Reject the original message (auto nack'ed). It will be retried at some future point in time
     throw new MessageHandlingException(
@@ -188,21 +197,40 @@ public class ManagedMessageRecoverer
       return;
     }
 
+    String logMessage =
+        isRateLimited(cause)
+            ? "Could not process message - rate limited"
+            : "Could not process message";
+
     if (logStackTraces) {
       log.atError()
-          .setMessage("Could not process message")
+          .setMessage(logMessage)
           .setCause(cause)
           .addKeyValue("message_hash", messageHash)
           .log();
     } else {
 
       log.atError()
-          .setMessage("Could not process message")
+          .setMessage(logMessage)
           .addKeyValue("message_hash", messageHash)
           .addKeyValue("cause", cause.getMessage())
           .addKeyValue("root_cause", stackTraceRootCause)
           .log();
     }
+  }
+
+  private boolean isRateLimited(Throwable cause) {
+    Throwable current = cause;
+
+    while (current != null) {
+      if (current.getMessage() != null
+          && current.getMessage().contains(RATE_LIMITER_EXCEPTION_MESSAGE)) {
+        return true;
+      }
+      current = current.getCause();
+    }
+
+    return false;
   }
 
   private String findUsefulRootCauseInStackTrace(Throwable cause) {

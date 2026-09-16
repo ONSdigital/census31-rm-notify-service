@@ -3,11 +3,12 @@ package uk.gov.ons.census.notifysvc.config;
 import com.google.cloud.spring.pubsub.core.PubSubTemplate;
 import com.google.cloud.spring.pubsub.integration.AckMode;
 import com.google.cloud.spring.pubsub.integration.inbound.PubSubInboundChannelAdapter;
+import java.time.Duration;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.retry.RetryListener;
+import org.springframework.core.retry.RetryPolicy;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.handler.advice.RequestHandlerRetryAdvice;
 import org.springframework.messaging.MessageChannel;
@@ -15,6 +16,8 @@ import uk.gov.ons.census.notifysvc.messaging.ManagedMessageRecoverer;
 
 @Configuration
 public class MessageConsumerConfig {
+  private static final long NOTIFY_TOTAL_ATTEMPTS = 3;
+
   private final ManagedMessageRecoverer managedMessageRecoverer;
   private final PubSubTemplate pubSubTemplate;
 
@@ -77,14 +80,9 @@ public class MessageConsumerConfig {
   @Bean
   public RequestHandlerRetryAdvice retryAdvice() {
     RequestHandlerRetryAdvice requestHandlerRetryAdvice = new RequestHandlerRetryAdvice();
+    requestHandlerRetryAdvice.setRetryPolicy(
+        RetryPolicy.builder().maxRetries(NOTIFY_TOTAL_ATTEMPTS - 1).delay(Duration.ZERO).build());
     requestHandlerRetryAdvice.setRecoveryCallback(managedMessageRecoverer);
     return requestHandlerRetryAdvice;
-  }
-
-  @Bean
-  public RetryListener retryListener() {
-    RetryListener retryListener = new DefaultListenerSupport();
-
-    return retryListener;
   }
 }
