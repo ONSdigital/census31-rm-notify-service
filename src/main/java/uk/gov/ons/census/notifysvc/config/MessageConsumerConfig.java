@@ -16,7 +16,10 @@ import uk.gov.ons.census.notifysvc.messaging.ManagedMessageRecoverer;
 
 @Configuration
 public class MessageConsumerConfig {
-  private static final int NOTIFY_TOTAL_ATTEMPTS = 3;
+  // Spring core retry defaults to maxRetries = 3, i.e. 3 retries after the initial call
+  // (4 total invocations). Pin this to 3 total invocations to preserve the pre-migration
+  // behaviour.
+  private static final int MESSAGE_TOTAL_ATTEMPTS = 3;
 
   private final ManagedMessageRecoverer managedMessageRecoverer;
   private final PubSubTemplate pubSubTemplate;
@@ -81,7 +84,7 @@ public class MessageConsumerConfig {
   public RequestHandlerRetryAdvice retryAdvice() {
     RequestHandlerRetryAdvice requestHandlerRetryAdvice = new RequestHandlerRetryAdvice();
     requestHandlerRetryAdvice.setRetryPolicy(
-        RetryPolicy.builder().maxRetries(NOTIFY_TOTAL_ATTEMPTS - 1).delay(Duration.ZERO).build());
+        RetryPolicy.builder().maxRetries(MESSAGE_TOTAL_ATTEMPTS - 1).delay(Duration.ZERO).build());
     requestHandlerRetryAdvice.setRecoveryCallback(managedMessageRecoverer);
     return requestHandlerRetryAdvice;
   }
