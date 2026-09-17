@@ -32,6 +32,11 @@ spring:
         subscriber:
           flow-control:
             max-outstanding-element-count: 100
+  jackson:
+    # Boot 4 migration: freeze Spring's own mapper at Jackson 2 behaviour so
+    # this release changes no API contract. REMOVE in H2 2027 as its own
+    # announced change, estate-wide.
+    use-jackson2-defaults: true
 
 exceptionmanager:
   connection:

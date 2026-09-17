@@ -5,14 +5,18 @@ import static uk.gov.ons.census.notifysvc.utils.Constants.RATE_LIMITER_EXCEPTION
 import com.google.cloud.spring.pubsub.support.BasicAcknowledgeablePubsubMessage;
 import com.google.cloud.spring.pubsub.support.GcpPubSubHeaders;
 import com.google.protobuf.ByteString;
+import com.google.pubsub.v1.ProjectSubscriptionName;
+import java.util.Objects;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.AttributeAccessor;
+import org.springframework.integration.core.RecoveryCallback;
+import org.springframework.lang.NonNull;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageHandlingException;
 import org.springframework.messaging.MessagingException;
-import org.springframework.retry.RecoveryCallback;
 import org.springframework.retry.RetryContext;
 import org.springframework.stereotype.Component;
 import uk.gov.ons.census.notifysvc.client.ExceptionManagerClient;
@@ -21,7 +25,8 @@ import uk.gov.ons.census.notifysvc.model.dto.api.SkippedMessage;
 import uk.gov.ons.census.notifysvc.utils.HashHelper;
 
 @Component
-public class ManagedMessageRecoverer implements RecoveryCallback<Object> {
+public class ManagedMessageRecoverer
+    implements RecoveryCallback<Object>, org.springframework.retry.RecoveryCallback<Object> {
   private static final Logger log = LoggerFactory.getLogger(ManagedMessageRecoverer.class);
   private static final String SERVICE_NAME = "Notify Service";
 
@@ -35,35 +40,40 @@ public class ManagedMessageRecoverer implements RecoveryCallback<Object> {
   }
 
   @Override
+  public Object recover(@NonNull AttributeAccessor context, @NonNull Throwable throwable) {
+    return recoverFromThrowable(throwable);
+  }
+
+  @Override
   public Object recover(RetryContext retryContext) {
-    if (!(retryContext.getLastThrowable() instanceof MessagingException)) {
-      log.atError()
-          .setMessage("Super duper unexpected kind of error, so going to fail very noisily")
-          .setCause(retryContext.getLastThrowable())
-          .log();
-      throw new RuntimeException(retryContext.getLastThrowable());
+    return recoverFromThrowable(retryContext.getLastThrowable());
+  }
+
+  private Object recoverFromThrowable(Throwable throwable) {
+    MessagingException messagingException = findMessagingException(throwable);
+    if (messagingException == null) {
+      log.error("Super duper unexpected kind of error, so going to fail very noisily", throwable);
+      throw new RuntimeException(throwable);
     }
 
-    MessagingException messagingException = (MessagingException) retryContext.getLastThrowable();
-    Message<?> message = messagingException.getFailedMessage();
+    Message<?> message = Objects.requireNonNull(messagingException.getFailedMessage());
     BasicAcknowledgeablePubsubMessage originalMessage =
         (BasicAcknowledgeablePubsubMessage)
-            message.getHeaders().get(GcpPubSubHeaders.ORIGINAL_MESSAGE);
-    String subscriptionName = originalMessage.getProjectSubscriptionName().getSubscription();
+            Objects.requireNonNull(message.getHeaders().get(GcpPubSubHeaders.ORIGINAL_MESSAGE));
+    ProjectSubscriptionName projectSubscriptionName =
+        Objects.requireNonNull(originalMessage.getProjectSubscriptionName());
+    String subscriptionName = projectSubscriptionName.getSubscription();
     ByteString originalMessageByteString = originalMessage.getPubsubMessage().getData();
     byte[] rawMessageBody = new byte[originalMessageByteString.size()];
     originalMessageByteString.copyTo(rawMessageBody, 0);
 
     String messageHash = HashHelper.hash(rawMessageBody);
 
-    String stackTraceRootCause = findUsefulRootCauseInStackTrace(retryContext.getLastThrowable());
+    String stackTraceRootCause = findUsefulRootCauseInStackTrace(throwable);
 
-    Throwable cause = retryContext.getLastThrowable();
-    if (retryContext.getLastThrowable() != null
-        && retryContext.getLastThrowable().getCause() != null
-        && retryContext.getLastThrowable().getCause().getCause() != null) {
-      cause = retryContext.getLastThrowable().getCause().getCause();
-    }
+    Throwable cause = findReportableCause(messagingException);
+    Throwable loggingCause =
+        messagingException.getCause() != null ? messagingException.getCause() : cause;
 
     ExceptionReportResponse reportResult =
         getExceptionReportResponse(cause, messageHash, stackTraceRootCause, subscriptionName);
@@ -74,12 +84,36 @@ public class ManagedMessageRecoverer implements RecoveryCallback<Object> {
 
     peekMessage(reportResult, messageHash, rawMessageBody);
 
-    logMessage(
-        reportResult, retryContext.getLastThrowable().getCause(), messageHash, stackTraceRootCause);
+    logMessage(reportResult, loggingCause, messageHash, stackTraceRootCause);
 
     // Reject the original message (auto nack'ed). It will be retried at some future point in time
     throw new MessageHandlingException(
         message, "Cannot process this message at this time, but it will be retried");
+  }
+
+  private MessagingException findMessagingException(Throwable throwable) {
+    Throwable current = throwable;
+    while (current != null) {
+      if (current instanceof MessagingException messagingException) {
+        return messagingException;
+      }
+      current = current.getCause();
+    }
+    return null;
+  }
+
+  private Throwable findReportableCause(MessagingException messagingException) {
+    Throwable cause = messagingException.getCause();
+
+    if (cause == null) {
+      return messagingException;
+    }
+
+    if (cause.getCause() != null) {
+      return cause.getCause();
+    }
+
+    return cause;
   }
 
   private ExceptionReportResponse getExceptionReportResponse(
@@ -124,6 +158,7 @@ public class ManagedMessageRecoverer implements RecoveryCallback<Object> {
       exceptionManagerClient.storeMessageBeforeSkipping(skippedMessage);
       result = true;
     } catch (Exception exceptionManagerClientException) {
+
       log.atWarn()
           .setMessage("Unable to store a copy of the message. Will NOT be quarantining")
           .setCause(exceptionManagerClientException)
@@ -162,43 +197,40 @@ public class ManagedMessageRecoverer implements RecoveryCallback<Object> {
       return;
     }
 
+    String logMessage =
+        isRateLimited(cause)
+            ? "Could not process message - rate limited"
+            : "Could not process message";
+
     if (logStackTraces) {
-      // Having a separate event for when we are rate limited - makes it easier to track
-      if (cause.getCause() != null
-          && cause.getCause().getMessage() != null
-          && cause.getCause().getMessage().contains(RATE_LIMITER_EXCEPTION_MESSAGE)) {
-        log.atError()
-            .setMessage("Could not process message - rate limited")
-            .setCause(cause)
-            .addKeyValue("message_hash", messageHash)
-            .log();
-      } else {
-        log.atError()
-            .setMessage("Could not process message")
-            .setCause(cause)
-            .addKeyValue("message_hash", messageHash)
-            .log();
-      }
+      log.atError()
+          .setMessage(logMessage)
+          .setCause(cause)
+          .addKeyValue("message_hash", messageHash)
+          .log();
     } else {
-      // Having a separate event for when we are rate limited - makes it easier to track
-      if (cause.getCause() != null
-          && cause.getCause().getMessage() != null
-          && cause.getCause().getMessage().contains(RATE_LIMITER_EXCEPTION_MESSAGE)) {
-        log.atError()
-            .setMessage("Could not process message - rate limited")
-            .addKeyValue("cause", cause.getMessage())
-            .addKeyValue("root_cause", stackTraceRootCause)
-            .addKeyValue("message_hash", messageHash)
-            .log();
-      } else {
-        log.atError()
-            .setMessage("Could not process message")
-            .addKeyValue("cause", cause.getMessage())
-            .addKeyValue("root_cause", stackTraceRootCause)
-            .addKeyValue("message_hash", messageHash)
-            .log();
-      }
+
+      log.atError()
+          .setMessage(logMessage)
+          .addKeyValue("message_hash", messageHash)
+          .addKeyValue("cause", cause.getMessage())
+          .addKeyValue("root_cause", stackTraceRootCause)
+          .log();
     }
+  }
+
+  private boolean isRateLimited(Throwable cause) {
+    Throwable current = cause;
+
+    while (current != null) {
+      if (current.getMessage() != null
+          && current.getMessage().contains(RATE_LIMITER_EXCEPTION_MESSAGE)) {
+        return true;
+      }
+      current = current.getCause();
+    }
+
+    return false;
   }
 
   private String findUsefulRootCauseInStackTrace(Throwable cause) {

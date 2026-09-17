@@ -1,10 +1,10 @@
 package uk.gov.ons.census.notifysvc.utils;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.cloud.spring.pubsub.core.PubSubTemplate;
 import java.util.concurrent.ExecutionException;
 import org.springframework.stereotype.Component;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventDTO;
 
 @Component
@@ -22,7 +22,7 @@ public class PubSubHelper {
       pubSubTemplate.publish(topic, objectMapper.writeValueAsBytes(payload)).get();
     } catch (ExecutionException e) {
       throw new RuntimeException("Error publishing message to PubSub topic ", e);
-    } catch (JsonProcessingException e) {
+    } catch (JacksonException e) {
       throw new RuntimeException("Error mapping event to JSON", e);
     } catch (InterruptedException e) {
       throw new RuntimeException(e);

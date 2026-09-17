@@ -1,7 +1,5 @@
 package uk.gov.ons.census.notifysvc.config;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -10,6 +8,8 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.ObjectMapper;
 import uk.gov.ons.census.notifysvc.utils.ObjectMapperFactory;
 
 @Configuration
@@ -26,7 +26,7 @@ public class NotifyConfiguration {
 
     try (InputStream configFileStream = new FileInputStream(configFile)) {
       rawJsonConfig = OBJECT_MAPPER.readValue(configFileStream, Map.class);
-    } catch (JsonProcessingException | FileNotFoundException e) {
+    } catch (JacksonException | FileNotFoundException e) {
       throw new RuntimeException(e);
     } catch (IOException e) {
       throw new RuntimeException(e);
