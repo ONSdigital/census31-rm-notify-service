@@ -45,6 +45,7 @@ import uk.gov.ons.census.notifysvc.model.dto.api.RequestDTO;
 import uk.gov.ons.census.notifysvc.model.dto.api.RequestHeaderDTO;
 import uk.gov.ons.census.notifysvc.model.dto.api.RequestPayloadDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventDTO;
+import uk.gov.ons.census.notifysvc.model.repository.ActionRuleRepository;
 import uk.gov.ons.census.notifysvc.model.repository.CaseRepository;
 import uk.gov.ons.census.notifysvc.model.repository.CollectionExerciseRepository;
 import uk.gov.ons.census.notifysvc.model.repository.EmailTemplateRepository;
@@ -76,6 +77,7 @@ class EmailFulfilmentEndpointIT {
   @Autowired private SurveyRepository surveyRepository;
   @Autowired private CollectionExerciseRepository collectionExerciseRepository;
   @Autowired private EmailTemplateRepository emailTemplateRepository;
+  @Autowired private ActionRuleRepository actionRuleRepository;
 
   @Autowired
   private FulfilmentSurveyEmailTemplateRepository fulfilmentSurveyEmailTemplateRepository;
@@ -100,6 +102,7 @@ class EmailFulfilmentEndpointIT {
 
   public void clearDownData() {
     fulfilmentSurveyEmailTemplateRepository.deleteAllInBatch();
+    actionRuleRepository.deleteAllInBatch();
     emailTemplateRepository.deleteAllInBatch();
     caseRepository.deleteAllInBatch();
     collectionExerciseRepository.deleteAllInBatch();

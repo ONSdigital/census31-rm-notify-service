@@ -59,6 +59,7 @@ class SmsRequestEnrichedReceiverIT {
   @Autowired private FulfilmentSurveySmsTemplateRepository fulfilmentSurveySmsTemplateRepository;
   @Autowired private PubSubTestHelper pubSubTestHelper;
   @Autowired private PubSubHelper pubSubHelper;
+  @Autowired private ActionRuleRepository actionRuleRepository;
 
   private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final EasyRandom easyRandom = new EasyRandom();
@@ -83,6 +84,7 @@ class SmsRequestEnrichedReceiverIT {
     fulfilmentSurveySmsTemplateRepository.deleteAllInBatch();
     smsTemplateRepository.deleteAllInBatch();
     caseRepository.deleteAllInBatch();
+    actionRuleRepository.deleteAllInBatch();
     collectionExerciseRepository.deleteAllInBatch();
     surveyRepository.deleteAllInBatch();
   }
