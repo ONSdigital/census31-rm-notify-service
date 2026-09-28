@@ -27,12 +27,6 @@ public class MessageConsumerConfig {
   @Value("${queueconfig.sms-request-enriched-subscription}")
   private String smsRequestEnrichedSubscription;
 
-  @Value("${queueconfig.email-request-subscription}")
-  private String emailRequestSubscription;
-
-  @Value("${queueconfig.email-request-enriched-subscription}")
-  private String emailRequestEnrichedSubscription;
-
   public MessageConsumerConfig(
       ManagedMessageRecoverer managedMessageRecoverer, PubSubTemplate pubSubTemplate) {
     this.managedMessageRecoverer = managedMessageRecoverer;
@@ -45,31 +39,9 @@ public class MessageConsumerConfig {
   }
 
   @Bean
-  public MessageChannel emailRequestInputChannel() {
-    return new DirectChannel();
-  }
-
-  @Bean
-  public MessageChannel emailRequestEnrichedInputChannel() {
-    return new DirectChannel();
-  }
-
-  @Bean
   public PubSubInboundChannelAdapter smsRequestEnrichedInbound(
       @Qualifier("smsRequestEnrichedInputChannel") MessageChannel channel) {
     return makeAdapter(channel, smsRequestEnrichedSubscription);
-  }
-
-  @Bean
-  public PubSubInboundChannelAdapter emailRequestInbound(
-      @Qualifier("emailRequestInputChannel") MessageChannel channel) {
-    return makeAdapter(channel, emailRequestSubscription);
-  }
-
-  @Bean
-  public PubSubInboundChannelAdapter emailRequestEnrichedInbound(
-      @Qualifier("emailRequestEnrichedInputChannel") MessageChannel channel) {
-    return makeAdapter(channel, emailRequestEnrichedSubscription);
   }
 
   private PubSubInboundChannelAdapter makeAdapter(MessageChannel channel, String subscriptionName) {

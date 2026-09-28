@@ -24,7 +24,3 @@ exceptionmanager:
 
 queueconfig:
   sms-confirmation-topic: rm-internal-sms-confirmation-dummy
-  email-confirmation-topic: rm-internal-email-confirmation-dummy
-
-springdoc:
-  writer-with-order-by-keys: true

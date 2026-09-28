@@ -1,7 +1,10 @@
 package uk.gov.ons.census.notifysvc.messaging;
 
 import static java.util.Map.entry;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.ons.census.notifysvc.testUtils.MessageConstructor.buildEventDTO;
 import static uk.gov.ons.census.notifysvc.testUtils.MessageConstructor.constructMessageWithValidTimeStamp;
@@ -14,6 +17,9 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,7 +28,6 @@ import org.springframework.messaging.Message;
 import uk.gov.ons.census.common.model.entity.Case;
 import uk.gov.ons.census.common.model.entity.SmsTemplate;
 import uk.gov.ons.census.notifysvc.config.NotifyServiceRefMapping;
-import uk.gov.ons.census.notifysvc.model.dto.api.UacQidCreatedPayloadDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.SmsRequestEnriched;
 import uk.gov.ons.census.notifysvc.model.repository.CaseRepository;
@@ -46,8 +51,18 @@ class SmsRequestEnrichedReceiverTest {
   @Value("${queueconfig.sms-request-enriched-topic}")
   private String smsRequestEnrichedTopic;
 
-  @Test
-  void testReceiveMessageHappyPath() throws NotificationClientException {
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "07123456789",
+        "07876543456",
+        "+447123456789",
+        "00447123456789",
+        "447123456789",
+        "7123456789",
+        "07564283939"
+      })
+  void testReceiveMessageHappyPath(String phoneNumber) throws NotificationClientException {
 
     // Given
     Case testCase = new Case();
@@ -60,10 +75,6 @@ class SmsRequestEnrichedReceiverTest {
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
 
-    UacQidCreatedPayloadDTO newUacQidCreated = new UacQidCreatedPayloadDTO();
-    newUacQidCreated.setUac(TEST_UAC);
-    newUacQidCreated.setQid(TEST_QID);
-
     EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();
     smsRequestEnriched.setCaseId(testCase.getId());
@@ -71,7 +82,7 @@ class SmsRequestEnrichedReceiverTest {
     smsRequestEnriched.setUac(TEST_UAC);
     smsRequestEnriched.setQid(TEST_QID);
     smsRequestEnriched.setPersonalisation(TEST_PERSONALISATION);
-    smsRequestEnriched.setPhoneNumber("07564283939");
+    smsRequestEnriched.setPhoneNumber(phoneNumber);
     smsRequestEnrichedEvent.getPayload().setSmsRequestEnriched(smsRequestEnriched);
 
     Map<String, String> personalisationValues =
@@ -100,6 +111,41 @@ class SmsRequestEnrichedReceiverTest {
             TEST_SENDER);
   }
 
+  @ParameterizedTest
+  @NullAndEmptySource
+  @ValueSource(
+      strings = {
+        "1",
+        "foo",
+        "007",
+        "071234567890",
+        "0447123456789",
+        "000447123456789",
+        "+44 7123456789",
+        "44+7123456789",
+        "0712345678a",
+        "@7123456789",
+        "07123 456789",
+        "(+44) 07123456789"
+      })
+  void testReceiveMessageRejectsInvalidPhoneNumber(String phoneNumber) {
+    EventDTO event = buildEventDTO(smsRequestEnrichedTopic);
+    SmsRequestEnriched request = new SmsRequestEnriched();
+    request.setPhoneNumber(phoneNumber);
+    event.getPayload().setSmsRequestEnriched(request);
+
+    IllegalArgumentException exception =
+        assertThrows(
+            IllegalArgumentException.class,
+            () ->
+                smsRequestEnrichedReceiver.receiveMessage(
+                    constructMessageWithValidTimeStamp(event)));
+
+    assertThat(exception).hasMessage("Invalid phone number on enriched SMS request event");
+    verifyNoInteractions(
+        smsTemplateRepository, caseRepository, notifyServiceRefMapping, notificationClient);
+  }
+
   @Test
   void testReceiveMessageNoPersonalisationOnTemplate() throws NotificationClientException {
 
@@ -112,10 +158,6 @@ class SmsRequestEnrichedReceiverTest {
     smsTemplate.setTemplate(new String[] {TEMPLATE_QID_KEY, TEMPLATE_UAC_KEY});
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
-
-    UacQidCreatedPayloadDTO newUacQidCreated = new UacQidCreatedPayloadDTO();
-    newUacQidCreated.setUac(TEST_UAC);
-    newUacQidCreated.setQid(TEST_QID);
 
     EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();
@@ -162,9 +204,6 @@ class SmsRequestEnrichedReceiverTest {
         new String[] {TEMPLATE_QID_KEY, TEMPLATE_UAC_KEY, TEMPLATE_REQUEST_PREFIX + "foo"});
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
-    UacQidCreatedPayloadDTO newUacQidCreated = new UacQidCreatedPayloadDTO();
-    newUacQidCreated.setUac(TEST_UAC);
-    newUacQidCreated.setQid(TEST_QID);
 
     EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();

@@ -4,13 +4,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.configureFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.postRequestedFor;
 import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
 import static com.github.tomakehurst.wiremock.client.WireMock.verify;
+import static uk.gov.ons.census.notifysvc.testUtils.JsonTestHelper.convertObjectToJson;
 import static uk.gov.ons.census.notifysvc.testUtils.MessageConstructor.buildEventDTO;
 import static uk.gov.ons.census.notifysvc.utils.Constants.TEMPLATE_QID_KEY;
 import static uk.gov.ons.census.notifysvc.utils.Constants.TEMPLATE_REQUEST_PREFIX;
 import static uk.gov.ons.census.notifysvc.utils.Constants.TEMPLATE_UAC_KEY;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.github.tomakehurst.wiremock.WireMockServer;
 import com.github.tomakehurst.wiremock.client.WireMock;
 import java.time.OffsetDateTime;
@@ -36,7 +35,7 @@ import uk.gov.ons.census.notifysvc.testUtils.PubSubTestHelper;
 import uk.gov.ons.census.notifysvc.utils.PubSubHelper;
 
 @ExtendWith(SpringExtension.class)
-@SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@SpringBootTest
 @ActiveProfiles("test")
 class SmsRequestEnrichedReceiverIT {
 
@@ -61,7 +60,6 @@ class SmsRequestEnrichedReceiverIT {
   @Autowired private PubSubHelper pubSubHelper;
   @Autowired private ActionRuleRepository actionRuleRepository;
 
-  private static final ObjectMapper objectMapper = new ObjectMapper();
   private static final EasyRandom easyRandom = new EasyRandom();
 
   private WireMockServer wireMockServer;
@@ -96,7 +94,7 @@ class SmsRequestEnrichedReceiverIT {
   }
 
   @Test
-  void happyPathSmsRequestEnrichedReceiver() throws JsonProcessingException, InterruptedException {
+  void happyPathSmsRequestEnrichedReceiver() throws InterruptedException {
     // Given
     // Set up all the data required
     Survey survey = new Survey();
@@ -149,7 +147,7 @@ class SmsRequestEnrichedReceiverIT {
     // Stub the Notify API endpoint with a success code and random response to keep the client happy
     NotifyApiSendSmsResponse notifyApiSendSmsResponse =
         easyRandom.nextObject(NotifyApiSendSmsResponse.class);
-    String notifyApiResponseJson = objectMapper.writeValueAsString(notifyApiSendSmsResponse);
+    String notifyApiResponseJson = convertObjectToJson(notifyApiSendSmsResponse);
     wireMockServer.stubFor(
         WireMock.post(urlEqualTo(SMS_NOTIFY_API_ENDPOINT))
             .willReturn(
