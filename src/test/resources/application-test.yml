@@ -12,10 +12,6 @@ spring:
 
 notifyserviceconfigfile: src/test/resources/dummy-test-notify-config.json
 
-uacservice:
-  connection:
-      port: 18166
-
 exceptionmanager:
   connection:
     scheme: http

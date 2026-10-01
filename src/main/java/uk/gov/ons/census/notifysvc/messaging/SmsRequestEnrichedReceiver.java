@@ -44,14 +44,13 @@ public class SmsRequestEnrichedReceiver {
     try {
       Thread.sleep(smsRequestEnrichedDelay);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted during throttling delay", e);
     }
 
     EventDTO event = convertJsonBytesToEvent(message.getPayload());
     SmsRequestEnriched smsRequestEnriched = event.getPayload().getSmsRequestEnriched();
-    if (!isValidPhoneNumber(smsRequestEnriched.getPhoneNumber())) {
-      throw new IllegalArgumentException("Invalid phone number on enriched SMS request event");
-    }
+
     SmsTemplate smsTemplate =
         smsTemplateRepository
             .findById(smsRequestEnriched.getPackCode())
@@ -94,13 +93,5 @@ public class SmsRequestEnrichedReceiver {
       throw new RuntimeException(
           "Error with Gov Notify when attempting to send SMS (from enriched SMS request event)", e);
     }
-  }
-
-  private boolean isValidPhoneNumber(String phoneNumber) {
-    if (phoneNumber == null) {
-      return false;
-    }
-    String sanitisedPhoneNumber = phoneNumber.replaceFirst("^(44|0044|\\+44|0)", "");
-    return sanitisedPhoneNumber.length() == 10 && sanitisedPhoneNumber.matches("^7[0-9]+$");
   }
 }

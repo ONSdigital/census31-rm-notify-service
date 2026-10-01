@@ -1,10 +1,7 @@
 package uk.gov.ons.census.notifysvc.messaging;
 
 import static java.util.Map.entry;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 import static uk.gov.ons.census.notifysvc.testUtils.MessageConstructor.buildEventDTO;
 import static uk.gov.ons.census.notifysvc.testUtils.MessageConstructor.constructMessageWithValidTimeStamp;
@@ -18,12 +15,10 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import uk.gov.ons.census.common.model.entity.Case;
 import uk.gov.ons.census.common.model.entity.SmsTemplate;
@@ -47,9 +42,7 @@ class SmsRequestEnrichedReceiverTest {
   private final String TEST_QID = "TEST_QID";
   private final String TEST_SENDER = "TEST_SENDER";
   private final Map<String, String> TEST_PERSONALISATION = Map.of("foo", "bar");
-
-  @Value("${queueconfig.sms-request-enriched-topic}")
-  private String smsRequestEnrichedTopic;
+  private static final String SMS_REQUEST_ENRICHED_TOPIC = "rm-internal-sms-request-enriched";
 
   @ParameterizedTest
   @ValueSource(
@@ -75,7 +68,7 @@ class SmsRequestEnrichedReceiverTest {
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
 
-    EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
+    EventDTO smsRequestEnrichedEvent = buildEventDTO(SMS_REQUEST_ENRICHED_TOPIC);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();
     smsRequestEnriched.setCaseId(testCase.getId());
     smsRequestEnriched.setPackCode("TEST_PACK_CODE");
@@ -111,41 +104,6 @@ class SmsRequestEnrichedReceiverTest {
             TEST_SENDER);
   }
 
-  @ParameterizedTest
-  @NullAndEmptySource
-  @ValueSource(
-      strings = {
-        "1",
-        "foo",
-        "007",
-        "071234567890",
-        "0447123456789",
-        "000447123456789",
-        "+44 7123456789",
-        "44+7123456789",
-        "0712345678a",
-        "@7123456789",
-        "07123 456789",
-        "(+44) 07123456789"
-      })
-  void testReceiveMessageRejectsInvalidPhoneNumber(String phoneNumber) {
-    EventDTO event = buildEventDTO(smsRequestEnrichedTopic);
-    SmsRequestEnriched request = new SmsRequestEnriched();
-    request.setPhoneNumber(phoneNumber);
-    event.getPayload().setSmsRequestEnriched(request);
-
-    IllegalArgumentException exception =
-        assertThrows(
-            IllegalArgumentException.class,
-            () ->
-                smsRequestEnrichedReceiver.receiveMessage(
-                    constructMessageWithValidTimeStamp(event)));
-
-    assertThat(exception).hasMessage("Invalid phone number on enriched SMS request event");
-    verifyNoInteractions(
-        smsTemplateRepository, caseRepository, notifyServiceRefMapping, notificationClient);
-  }
-
   @Test
   void testReceiveMessageNoPersonalisationOnTemplate() throws NotificationClientException {
 
@@ -159,7 +117,7 @@ class SmsRequestEnrichedReceiverTest {
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
 
-    EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
+    EventDTO smsRequestEnrichedEvent = buildEventDTO(SMS_REQUEST_ENRICHED_TOPIC);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();
     smsRequestEnriched.setCaseId(testCase.getId());
     smsRequestEnriched.setPackCode("TEST_PACK_CODE");
@@ -205,7 +163,7 @@ class SmsRequestEnrichedReceiverTest {
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
 
-    EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
+    EventDTO smsRequestEnrichedEvent = buildEventDTO(SMS_REQUEST_ENRICHED_TOPIC);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();
     smsRequestEnriched.setCaseId(testCase.getId());
     smsRequestEnriched.setPackCode("TEST_PACK_CODE");

@@ -40,12 +40,6 @@ exceptionmanager:
   connection:
     scheme: http
 
-uacservice:
-  connection:
-    scheme: http
-    host: localhost
-    port: 8164
-
 queueconfig:
   sms-confirmation-topic: rm-internal-sms-confirmation
   sms-request-enriched-topic: rm-internal-sms-request-enriched
@@ -55,9 +49,6 @@ queueconfig:
 healthcheck:
   frequency: 15000 #milliseconds
   filename: /tmp/notify-service-healthy
-
-scheduler:
-  leaderDeathTimeout: 120 #seconds
 
 messagelogging:
   logstacktraces: false

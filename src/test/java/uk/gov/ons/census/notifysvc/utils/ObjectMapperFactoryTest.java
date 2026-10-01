@@ -7,7 +7,6 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 import uk.gov.ons.census.common.model.entity.EventType;
-import uk.gov.ons.census.notifysvc.model.dto.api.RequestPayloadDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventHeaderDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.PayloadDTO;
@@ -74,7 +73,6 @@ class ObjectMapperFactoryTest {
   @Test
   void shouldOmitNullFieldsFromJsonIncludeDtos() {
     assertThat(OBJECT_MAPPER.writeValueAsString(new PayloadDTO())).isEqualTo("{}");
-    assertThat(OBJECT_MAPPER.writeValueAsString(new RequestPayloadDTO())).isEqualTo("{}");
   }
 
   private record CaseEvent(String caseId, OffsetDateTime eventTime, String action) {}
