@@ -14,15 +14,15 @@ import java.util.Optional;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.messaging.Message;
 import uk.gov.ons.census.common.model.entity.Case;
 import uk.gov.ons.census.common.model.entity.SmsTemplate;
 import uk.gov.ons.census.notifysvc.config.NotifyServiceRefMapping;
-import uk.gov.ons.census.notifysvc.model.dto.api.UacQidCreatedPayloadDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.SmsRequestEnriched;
 import uk.gov.ons.census.notifysvc.model.repository.CaseRepository;
@@ -42,12 +42,20 @@ class SmsRequestEnrichedReceiverTest {
   private final String TEST_QID = "TEST_QID";
   private final String TEST_SENDER = "TEST_SENDER";
   private final Map<String, String> TEST_PERSONALISATION = Map.of("foo", "bar");
+  private static final String SMS_REQUEST_ENRICHED_TOPIC = "rm-internal-sms-request-enriched";
 
-  @Value("${queueconfig.sms-request-enriched-topic}")
-  private String smsRequestEnrichedTopic;
-
-  @Test
-  void testReceiveMessageHappyPath() throws NotificationClientException {
+  @ParameterizedTest
+  @ValueSource(
+      strings = {
+        "07123456789",
+        "07876543456",
+        "+447123456789",
+        "00447123456789",
+        "447123456789",
+        "7123456789",
+        "07564283939"
+      })
+  void testReceiveMessageHappyPath(String phoneNumber) throws NotificationClientException {
 
     // Given
     Case testCase = new Case();
@@ -60,18 +68,14 @@ class SmsRequestEnrichedReceiverTest {
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
 
-    UacQidCreatedPayloadDTO newUacQidCreated = new UacQidCreatedPayloadDTO();
-    newUacQidCreated.setUac(TEST_UAC);
-    newUacQidCreated.setQid(TEST_QID);
-
-    EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
+    EventDTO smsRequestEnrichedEvent = buildEventDTO(SMS_REQUEST_ENRICHED_TOPIC);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();
     smsRequestEnriched.setCaseId(testCase.getId());
     smsRequestEnriched.setPackCode("TEST_PACK_CODE");
     smsRequestEnriched.setUac(TEST_UAC);
     smsRequestEnriched.setQid(TEST_QID);
     smsRequestEnriched.setPersonalisation(TEST_PERSONALISATION);
-    smsRequestEnriched.setPhoneNumber("07564283939");
+    smsRequestEnriched.setPhoneNumber(phoneNumber);
     smsRequestEnrichedEvent.getPayload().setSmsRequestEnriched(smsRequestEnriched);
 
     Map<String, String> personalisationValues =
@@ -113,11 +117,7 @@ class SmsRequestEnrichedReceiverTest {
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
 
-    UacQidCreatedPayloadDTO newUacQidCreated = new UacQidCreatedPayloadDTO();
-    newUacQidCreated.setUac(TEST_UAC);
-    newUacQidCreated.setQid(TEST_QID);
-
-    EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
+    EventDTO smsRequestEnrichedEvent = buildEventDTO(SMS_REQUEST_ENRICHED_TOPIC);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();
     smsRequestEnriched.setCaseId(testCase.getId());
     smsRequestEnriched.setPackCode("TEST_PACK_CODE");
@@ -162,11 +162,8 @@ class SmsRequestEnrichedReceiverTest {
         new String[] {TEMPLATE_QID_KEY, TEMPLATE_UAC_KEY, TEMPLATE_REQUEST_PREFIX + "foo"});
     smsTemplate.setNotifyTemplateId(UUID.randomUUID());
     smsTemplate.setNotifyServiceRef("test-service");
-    UacQidCreatedPayloadDTO newUacQidCreated = new UacQidCreatedPayloadDTO();
-    newUacQidCreated.setUac(TEST_UAC);
-    newUacQidCreated.setQid(TEST_QID);
 
-    EventDTO smsRequestEnrichedEvent = buildEventDTO(smsRequestEnrichedTopic);
+    EventDTO smsRequestEnrichedEvent = buildEventDTO(SMS_REQUEST_ENRICHED_TOPIC);
     SmsRequestEnriched smsRequestEnriched = new SmsRequestEnriched();
     smsRequestEnriched.setCaseId(testCase.getId());
     smsRequestEnriched.setPackCode("TEST_PACK_CODE");

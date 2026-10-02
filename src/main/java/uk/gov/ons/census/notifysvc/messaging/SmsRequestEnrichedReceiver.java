@@ -44,11 +44,13 @@ public class SmsRequestEnrichedReceiver {
     try {
       Thread.sleep(smsRequestEnrichedDelay);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new RuntimeException("Interrupted during throttling delay", e);
     }
 
     EventDTO event = convertJsonBytesToEvent(message.getPayload());
     SmsRequestEnriched smsRequestEnriched = event.getPayload().getSmsRequestEnriched();
+
     SmsTemplate smsTemplate =
         smsTemplateRepository
             .findById(smsRequestEnriched.getPackCode())

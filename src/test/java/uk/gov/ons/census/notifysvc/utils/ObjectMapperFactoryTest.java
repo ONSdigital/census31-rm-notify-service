@@ -3,13 +3,10 @@ package uk.gov.ons.census.notifysvc.utils;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.time.OffsetDateTime;
-import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import tools.jackson.databind.ObjectMapper;
 import uk.gov.ons.census.common.model.entity.EventType;
-import uk.gov.ons.census.notifysvc.model.dto.api.RequestPayloadDTO;
-import uk.gov.ons.census.notifysvc.model.dto.event.EmailRequest;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.EventHeaderDTO;
 import uk.gov.ons.census.notifysvc.model.dto.event.PayloadDTO;
@@ -55,24 +52,16 @@ class ObjectMapperFactoryTest {
   void shouldRoundTripEventDtosContainingOffsetDateTime() {
     EventHeaderDTO eventHeaderDTO = new EventHeaderDTO();
     eventHeaderDTO.setVersion(Constants.OUTBOUND_EVENT_SCHEMA_VERSION);
-    eventHeaderDTO.setTopic("event_email-request");
+    eventHeaderDTO.setTopic("event_sms-request");
     eventHeaderDTO.setSource("NOTIFY_SERVICE");
     eventHeaderDTO.setChannel("RM");
     eventHeaderDTO.setDateTime(EVENT_TIME);
     eventHeaderDTO.setMessageId(UUID.fromString("926cdd2b-1454-4da9-8203-669618f81e33"));
     eventHeaderDTO.setCorrelationId(UUID.fromString("58004677-17ce-4bd7-ac7d-433e421dbcd5"));
     eventHeaderDTO.setOriginatingUser("notify-service@test.ons.gov.uk");
-    eventHeaderDTO.setMessageType(EventType.ACTION_RULE_EMAIL_REQUEST);
-
-    EmailRequest emailRequest = new EmailRequest();
-    emailRequest.setCaseId(UUID.fromString("57f6195f-f830-478c-b021-3d797b70087d"));
-    emailRequest.setEmail("notify.service@test.ons.gov.uk");
-    emailRequest.setPackCode("P_A");
-    emailRequest.setScheduled(false);
-    emailRequest.setPersonalisation(Map.of("firstName", "Taylor"));
+    eventHeaderDTO.setMessageType(EventType.ACTION_RULE_SMS_REQUEST);
 
     PayloadDTO payloadDTO = new PayloadDTO();
-    payloadDTO.setEmailRequest(emailRequest);
 
     EventDTO eventDTO = new EventDTO(eventHeaderDTO, payloadDTO);
 
@@ -84,7 +73,6 @@ class ObjectMapperFactoryTest {
   @Test
   void shouldOmitNullFieldsFromJsonIncludeDtos() {
     assertThat(OBJECT_MAPPER.writeValueAsString(new PayloadDTO())).isEqualTo("{}");
-    assertThat(OBJECT_MAPPER.writeValueAsString(new RequestPayloadDTO())).isEqualTo("{}");
   }
 
   private record CaseEvent(String caseId, OffsetDateTime eventTime, String action) {}

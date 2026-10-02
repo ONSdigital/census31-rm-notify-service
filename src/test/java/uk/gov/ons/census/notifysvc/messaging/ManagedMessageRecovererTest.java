@@ -289,7 +289,7 @@ class ManagedMessageRecovererTest {
         testSetupTestRecover(
             exceptionReportResponse,
             new RuntimeException(
-                RATE_LIMITER_EXCEPTION_MESSAGE + " email (from enriched email request event)",
+                RATE_LIMITER_EXCEPTION_MESSAGE + " sms (from enriched sms request event)",
                 new RuntimeException("429")));
 
     ReflectionTestUtils.setField(underTest, "logStackTraces", false);

@@ -10,7 +10,4 @@ public class PayloadDTO {
 
   private SmsConfirmation smsConfirmation;
   private SmsRequestEnriched smsRequestEnriched;
-  private EmailConfirmation emailConfirmation;
-  private EmailRequest emailRequest;
-  private EmailRequestEnriched emailRequestEnriched;
 }

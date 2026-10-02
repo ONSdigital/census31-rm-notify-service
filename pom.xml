@@ -18,7 +18,7 @@
     <properties>
         <java.version>21</java.version>
         <maven.compiler.release>${java.version}</maven.compiler.release>
-        <census-rm-common-entity-model.version>1.0.1</census-rm-common-entity-model.version>
+        <census-rm-common-entity-model.version>1.0.2</census-rm-common-entity-model.version>
         <census-rm-shared-sample-validation.version>1.0.1</census-rm-shared-sample-validation.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <container.cli>docker</container.cli>
@@ -31,12 +31,9 @@
         <logstash-logback-encoder.version>9.0</logstash-logback-encoder.version>
         <hypersistence-utils.version>3.15.5</hypersistence-utils.version>
         <spring-retry.version>2.0.13</spring-retry.version>
-        <swagger-annotations.version>2.2.52</swagger-annotations.version>
         <notifications-java-client.version>6.2.0-RELEASE</notifications-java-client.version>
-        <springdoc-openapi.version>3.1.0</springdoc-openapi.version>
 
         <!-- Test dependency versions -->
-        <unirest-java.version>1.4.9</unirest-java.version>
         <easy-random.version>6.0.1</easy-random.version>
         <wiremock.version>3.13.2</wiremock.version>
 
@@ -145,12 +142,8 @@
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-webmvc</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
         </dependency>
         <dependency>
             <groupId>com.google.cloud</groupId>
@@ -181,11 +174,6 @@
             <version>${notifications-java-client.version}</version>
         </dependency>
         <dependency>
-            <groupId>io.swagger.core.v3</groupId>
-            <artifactId>swagger-annotations</artifactId>
-            <version>${swagger-annotations.version}</version>
-        </dependency>
-        <dependency>
             <groupId>org.aspectj</groupId>
             <artifactId>aspectjweaver</artifactId>
         </dependency>
@@ -208,12 +196,6 @@
             <version>${spring-retry.version}</version>
         </dependency>
         <dependency>
-            <groupId>com.mashape.unirest</groupId>
-            <artifactId>unirest-java</artifactId>
-            <version>${unirest-java.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
             <groupId>org.wiremock</groupId>
             <artifactId>wiremock-standalone</artifactId>
             <version>${wiremock.version}</version>
@@ -223,12 +205,6 @@
             <groupId>org.jeasy</groupId>
             <artifactId>easy-random</artifactId>
             <version>${easy-random.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>${springdoc-openapi.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

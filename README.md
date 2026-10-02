@@ -2,7 +2,6 @@
 A service for making requests to Gov Notify
 
 ## Building
-As part of documentation auto-generation, an NPM library is required to be installed, which can be done by running: `sudo npm install -g widdershins`
 
 Podman and Docker are both supported for building and running the application.
 By default the Makefile will use `docker` unless you are on an `arm64` architecture (e.g. M1/M2 Mac) in which case it will use `podman`.
@@ -46,8 +45,3 @@ SPRING_CLOUD_GCP_PUBSUB_EMULATOR_HOST=localhost:8538
 SPRING_CLOUD_GCP_PUBSUB_PROJECT_ID=project
 NOTIFY_BASEURL=http://localhost:8917
 ```
-
-## Endpoints
-The OpenAPI v3 spec can be found here: [api.json](docs/api.json)
-
-The API is documented in human-readable format, here: [api.md](docs/api.md)
