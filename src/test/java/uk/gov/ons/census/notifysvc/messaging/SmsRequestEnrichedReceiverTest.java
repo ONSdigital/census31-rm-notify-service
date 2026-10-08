@@ -101,6 +101,7 @@ class SmsRequestEnrichedReceiverTest {
             smsTemplate.getNotifyTemplateId().toString(),
             smsRequestEnrichedEvent.getPayload().getSmsRequestEnriched().getPhoneNumber(),
             personalisationValues,
+            smsTemplate.getNotifyServiceRef(),
             TEST_SENDER);
   }
 
@@ -146,6 +147,7 @@ class SmsRequestEnrichedReceiverTest {
             smsTemplate.getNotifyTemplateId().toString(),
             smsRequestEnrichedEvent.getPayload().getSmsRequestEnriched().getPhoneNumber(),
             personalisationValues,
+            smsTemplate.getNotifyServiceRef(),
             TEST_SENDER);
   }
 
@@ -192,6 +194,7 @@ class SmsRequestEnrichedReceiverTest {
             smsTemplate.getNotifyTemplateId().toString(),
             smsRequestEnrichedEvent.getPayload().getSmsRequestEnriched().getPhoneNumber(),
             personalisationValues,
+            smsTemplate.getNotifyServiceRef(),
             TEST_SENDER);
   }
 }

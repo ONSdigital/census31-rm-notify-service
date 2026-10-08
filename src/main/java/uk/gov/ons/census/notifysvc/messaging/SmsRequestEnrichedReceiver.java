@@ -84,6 +84,7 @@ public class SmsRequestEnrichedReceiver {
           smsTemplate.getNotifyTemplateId().toString(),
           smsRequestEnriched.getPhoneNumber(),
           personalisationTemplateValues,
+          notifyServiceRef,
           senderId);
     } catch (NotificationClientException e) {
       if (e.getHttpResult() == RATE_LIMIT_ERROR_HTTP_STATUS) {
