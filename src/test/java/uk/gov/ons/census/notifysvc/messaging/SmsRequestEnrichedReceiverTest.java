@@ -94,6 +94,7 @@ class SmsRequestEnrichedReceiverTest {
 
     // When
     smsRequestEnrichedReceiver.receiveMessage(eventMessage);
+    String correlationId = String.valueOf(smsRequestEnrichedEvent.getHeader().getCorrelationId());
 
     // Then
     verify(notificationClient)
@@ -101,7 +102,7 @@ class SmsRequestEnrichedReceiverTest {
             smsTemplate.getNotifyTemplateId().toString(),
             smsRequestEnrichedEvent.getPayload().getSmsRequestEnriched().getPhoneNumber(),
             personalisationValues,
-            smsTemplate.getNotifyServiceRef(),
+            correlationId,
             TEST_SENDER);
   }
 
@@ -140,6 +141,7 @@ class SmsRequestEnrichedReceiverTest {
 
     // When
     smsRequestEnrichedReceiver.receiveMessage(eventMessage);
+    String correlationId = String.valueOf(smsRequestEnrichedEvent.getHeader().getCorrelationId());
 
     // Then
     verify(notificationClient)
@@ -147,7 +149,7 @@ class SmsRequestEnrichedReceiverTest {
             smsTemplate.getNotifyTemplateId().toString(),
             smsRequestEnrichedEvent.getPayload().getSmsRequestEnriched().getPhoneNumber(),
             personalisationValues,
-            smsTemplate.getNotifyServiceRef(),
+            correlationId,
             TEST_SENDER);
   }
 
@@ -187,6 +189,7 @@ class SmsRequestEnrichedReceiverTest {
 
     // When
     smsRequestEnrichedReceiver.receiveMessage(eventMessage);
+    String correlationId = String.valueOf(smsRequestEnrichedEvent.getHeader().getCorrelationId());
 
     // Then
     verify(notificationClient)
@@ -194,7 +197,7 @@ class SmsRequestEnrichedReceiverTest {
             smsTemplate.getNotifyTemplateId().toString(),
             smsRequestEnrichedEvent.getPayload().getSmsRequestEnriched().getPhoneNumber(),
             personalisationValues,
-            smsTemplate.getNotifyServiceRef(),
+            correlationId,
             TEST_SENDER);
   }
 }
