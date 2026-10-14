@@ -67,6 +67,10 @@ public class SmsRequestEnrichedReceiver {
                     new RuntimeException(
                         "Case not found with ID: " + smsRequestEnriched.getCaseId()));
 
+    String correlationId = null;
+    if (event.getHeader() != null && event.getHeader().getCorrelationId() != null)
+      correlationId = String.valueOf(event.getHeader().getCorrelationId());
+
     Map<String, String> personalisationTemplateValues =
         buildPersonalisationFromTemplate(
             smsTemplate.getTemplate(),
@@ -84,6 +88,7 @@ public class SmsRequestEnrichedReceiver {
           smsTemplate.getNotifyTemplateId().toString(),
           smsRequestEnriched.getPhoneNumber(),
           personalisationTemplateValues,
+          correlationId,
           senderId);
     } catch (NotificationClientException e) {
       if (e.getHttpResult() == RATE_LIMIT_ERROR_HTTP_STATUS) {
